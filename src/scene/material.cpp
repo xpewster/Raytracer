@@ -49,8 +49,7 @@ glm::dvec3 Material::shade(Scene* scene, const ray& r, const isect& i) const
 	it += ka(i) * scene->ambient();
 
 	for(const auto& pl : scene->getAllLights()){
-		double atten = pl->distanceAttenuation(r.at(i.getT()));
-		//pl->shadowAttenuation(r, c)
+		glm::dvec3 atten = pl->distanceAttenuation(r.at(i.getT())) * pl->shadowAttenuation(r, r.at(i.getT()));
 		glm::dvec3 diffuse = kd(i)*max(glm::dot(pl->getDirection(r.at(i.getT())), i.getN()), 0.0);
 		glm::dvec3 specular = ks(i)*pow(max(glm::dot(glm::reflect(pl->getDirection(r.at(i.getT())), i.getN()), r.getDirection()), 0.0), shininess(i));
 		it += atten*(diffuse + specular);
