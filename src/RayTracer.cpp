@@ -91,16 +91,18 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 		// more steps: add in the contributions from reflected and refracted
 		// rays.
 
+		//cout << "recursion depth: " << depth << "\n";	
+
 		const Material& m = i.getMaterial();
 		colorC = m.shade(scene.get(), r, i);
 
-		// if (depth < traceUI->getDepth()){
-		// 	ray r2(glm::dvec3(0,0,0), glm::dvec3(0,0,0), glm::dvec3(1,1,1), ray::REFLECTION);
-		// 	r2.setPosition(r.at(i.getT()));
-		// 	r2.setDirection(glm::normalize(glm::reflect(r.getDirection(), i.getN())));
-
-		// 	colorC += m.kr(i)*traceRay(r2, thresh, depth+1, t);
-		// }
+		if (depth < traceUI->getDepth()){
+			ray r2(r.at(i.getT()), glm::normalize(glm::reflect<3, double>(r.getDirection(), i.getN())), glm::dvec3(1,1,1), ray::REFLECTION);
+			//cout << r.getDirection() << " " << glm::normalize(glm::reflect(-r.getDirection(), i.getN()));
+			
+			double dummy;
+			colorC += m.kr(i)*traceRay(r2, thresh, depth+1, dummy);
+		}
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
