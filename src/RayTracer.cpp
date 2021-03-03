@@ -97,11 +97,33 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 		colorC = m.shade(scene.get(), r, i);
 
 		if (depth < traceUI->getDepth()){
+			/* Reflection */
 			ray r2(r.at(i.getT()), glm::normalize(glm::reflect<3, double>(r.getDirection(), i.getN())), glm::dvec3(1,1,1), ray::REFLECTION);
-			//cout << r.getDirection() << " " << glm::normalize(glm::reflect(-r.getDirection(), i.getN()));
 			
 			double dummy;
 			colorC += m.kr(i)*traceRay(r2, thresh, depth+1, dummy);
+
+			/* Refraction */
+			if (glm::length(m.kt(i)) > 0){
+				double n_i, n_t;
+				glm::dvec3 norm = i.getN();
+				if (glm::dot(r.getDirection(), i.getN()) < 0){
+					n_i = 1.0;
+					n_t = m.index(i);
+				}
+				else {
+					norm = -norm;
+					n_i = m.index(i);
+					n_t = 1.0;
+				}
+				ray r3(r.at(i.getT()), glm::normalize(glm::refract(r.getDirection(), norm, n_i/n_t)), glm::dvec3(1,1,1), ray::REFRACTION);
+				if (glm::dot(r.getDirection(), r3.getDirection()) == 0.0){ // total internal reflection
+
+				}
+				else{
+					colorC += m.kt(i)*traceRay(r3, thresh, depth+1, dummy);
+				}
+			}
 		}
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
