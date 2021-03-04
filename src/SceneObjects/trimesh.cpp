@@ -97,6 +97,61 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
 	//
 	// FIXME: Add ray-trimesh intersection
 
+	/* Plane intersection */
+	double _dot = glm::dot(normal, r.getDirection());
+	if (_dot == 0)
+		return false;
+
+	glm::dvec3 a = parent->vertices[ids[0]];
+	glm::dvec3 b = parent->vertices[ids[1]];
+	glm::dvec3 c = parent->vertices[ids[2]];
+
+	//double d = -(normal.x*a.x + normal.y*a.y + normal.z*a.z);
+	double t = (dist-glm::dot(normal, r.getPosition()))/_dot;
+
+	glm::dvec3 q = r.at(t);
+
+	double aa = glm::length(glm::cross((c-b), (q-b)))/2.0;
+	double ab = glm::length(glm::cross((a-c), (q-c)))/2.0;
+	double ac = glm::length(glm::cross((b-a), (q-a)))/2.0;
+	double A = glm::length(glm::cross((c-b), (a-b)))/2.0;
+
+	double alpha = aa/A;
+	double beta = ab/A;
+	double gamma = ac/A;
+
+	if (alpha >= 0 && beta >= 0 && gamma >= 0 && alpha+beta+gamma > 1.0-RAY_EPSILON && alpha+beta+gamma < 1.0+RAY_EPSILON){
+		i.setObject(this);
+		i.setT(t);
+		i.setBary(alpha, beta, gamma);
+		if (parent->materials.empty()){
+			i.setMaterial(this->getMaterial());
+		}
+		else {
+			Material ma = *parent->materials[ids[0]];
+			Material mb = *parent->materials[ids[1]];
+			Material mc = *parent->materials[ids[2]];
+			isect m;
+
+			ma.setAmbient(alpha*ma.ka(m) + beta*mb.ka(m) + gamma*mc.ka(m));
+			ma.setDiffuse(alpha*ma.kd(m) + beta*mb.kd(m) + gamma*mc.kd(m));
+			i.setMaterial(ma);
+		}
+		
+		if (parent->normals.empty()) {
+			i.setN(normal);
+		}
+		else {
+			glm::dvec3 na = parent->normals[ids[0]];
+			glm::dvec3 nb = parent->normals[ids[1]];
+			glm::dvec3 nc = parent->normals[ids[2]];
+			
+			i.setN(glm::normalize(alpha*na + beta*nb + gamma*nc));
+		}
+
+		return true;
+	}
+
 	return false;
 }
 

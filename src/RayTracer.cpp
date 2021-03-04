@@ -117,10 +117,7 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 					n_t = 1.0;
 				}
 				ray r3(r.at(i.getT()), glm::normalize(glm::refract(r.getDirection(), norm, n_i/n_t)), glm::dvec3(1,1,1), ray::REFRACTION);
-				if (glm::dot(r.getDirection(), r3.getDirection()) == 0.0){ // total internal reflection
-
-				}
-				else{
+				if (glm::dot(r.getDirection(), r3.getDirection()) != 0.0){ // not total internal reflection
 					colorC += m.kt(i)*traceRay(r3, thresh, depth+1, dummy);
 				}
 			}
